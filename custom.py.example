@@ -1,0 +1,32 @@
+## directory where libraries (e.g. openfst, gzstream, etc) are installed
+# OVERLAY = "/export/projects/nlp/tools/overlay_fc11"
+
+## directory of SVN tree from lorelei
+# BABEL_REPO = "/export/projects/nlp/BABEL/lorelei_svn"
+
+## directory of F4DE
+# F4DE = "/export/projects/nlp/BABEL/lorelei_resources/F4DE"
+
+## directory of IndusDB
+# INDUS_DB = "/export/projects/nlp/BABEL/lorelei_resources/IndusDB"
+
+## list of experiments to perform:
+##   WORD_TO_WORD_FST : weighted edges between words (currently, words only attach to themselves, i.e. unused)
+##   DICTIONARY       : words-to-vocalizations
+##   DATABASE         : 
+##   QUERY_TERMS      : search terms, one per line
+##   LATTICE_DIRECTORY: contains output from ASR (gzipped fsm files)
+EXPERIMENTS = {
+    # "anahita_tagalog_baseline" : {
+    #     "LATTICE_DIRECTORY" : "/export/projects/nlp/BABEL/Baseline/Tagalog/dlatSA/lat",
+    #     "DATABASE" : "/export/projects/nlp/BABEL/VT-2-5-babel/ATR-babel/segment/db/db.dev.auto.128-256-0.2",
+    #     "WORD_TO_WORD_FST" : "${BABEL_REPO}/KWS/resources/106/full/kws-resources/w2w.fst",
+    #     "IV_DICTIONARY" : "${BABEL_REPO}/KWS/resources/106/full/kws-resources/dict.IV.v2w.gz",
+    #     "OOV_DICTIONARY" : "${BABEL_REPO}/KWS/resources/106/full/kws-resources/dict.OOV.v2p",
+    #     "IV_QUERY_TERMS" : "${BABEL_REPO}/KWS/resources/106/full/kws-resources/queryterms.iv",
+    #     "OOV_QUERY_TERMS" : "${BABEL_REPO}/KWS/resources/106/full/kws-resources/queryterms.oov",
+    #     "TERM_MAP" : "${BABEL_REPO}/KWS/resources/106/full/kws-resources/term.map",
+    #     "EXPID" : "tagalog_baseline_LoreleiLattices",
+    #     "JOBS" : 5,
+    #     },    
+    }
