@@ -14,14 +14,10 @@ import subprocess
 import shlex
 import time
 
-#def run_command(cmd, overlay="", f4de_base=""):
 def run_command(cmd, env={}, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE):
     """
     simple convenience wrapper for running commands (not an actual Builder)
     """
-    #process = subprocess.Popen(shlex.split(cmd), env={"LD_LIBRARY_PATH" : overlay, "F4DE_BASE" : "%s" % f4de_base, "PERL5LIB" : "%s/lib/perl5/site_perl/:%s/common/lib:%s/KWSEval/lib" % (overlay, f4de_base, f4de_base), "F4DE_XMLLINT" : "/usr/bin/xmllint"}, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    #stdout, stderr = process.communicate()
-    #return stdout, stderr, process.returncode
     process = subprocess.Popen(shlex.split(cmd), env=env, stdin=stdin, stdout=stdout, stderr=stderr)
     out, err = process.communicate()
     return out, err, process.returncode == 0
@@ -139,29 +135,22 @@ def get_file_list(target, source, env):
 
 def build_index(target, source, env):
     command = env.subst("${BABEL_REPO}/KWS/bin64/buildindex -p ${SOURCE} ${TARGET}", target=target, source=source)
-    #process = subprocess.Popen(shlex.split(command), env={"LD_LIBRARY_PATH" : env.subst(env["LIBRARY_OVERLAY"])}, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr, success = run_command(command, env={"LD_LIBRARY_PATH" : env.subst(env["LIBRARY_OVERLAY"])}, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    #= process.communicate()
-
     if not success:
         return stderr
     return None
 
 def build_pad_fst(target, source, env):
     command = env.subst("${BABEL_REPO}/KWS/bin64/buildpadfst ${SOURCE} ${TARGET}", target=target, source=source)
-    #process = subprocess.Popen(shlex.split(command), env={"LD_LIBRARY_PATH" : env.subst(env["LIBRARY_OVERLAY"])}, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr, success = run_command(command, env={"LD_LIBRARY_PATH" : env.subst(env["LIBRARY_OVERLAY"])}, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    #= process.communicate()
     if not success:
         return stderr
     return None
 
 def fst_compile(target, source, env):
     command = env.subst("${OVERLAY}/bin/fstcompile --isymbols=${SOURCES[0]} --osymbols=${SOURCES[0]} ${SOURCES[1]}", target=target, source=source)
-    #process = subprocess.Popen(shlex.split(command), env={"LD_LIBRARY_PATH" : env.subst(env["LIBRARY_OVERLAY"])}, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr, success = run_command(command, env={"LD_LIBRARY_PATH" : env.subst(env["LIBRARY_OVERLAY"])}, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    #= process.communicate()
-    if not success: #process.returncode != 0:
+    if not success:
         return stderr
     open(target[0].rstr(), "w").write(stdout)
     return None
@@ -173,10 +162,8 @@ def query_to_phone_fst(target, source, env):
     except:
         pass
     command = env.subst("${BABEL_REPO}/KWS/bin64/query2phonefst -p ${SOURCES[0]} -s ${SOURCES[1]} -d ${SOURCES[2]} -l ${TARGETS[0]} -n %(n)d -I %(I)d %(OUTDIR)s ${SOURCES[3]}" % args, target=target, source=source)
-    #process = subprocess.Popen(shlex.split(command), env={"LD_LIBRARY_PATH" : env.subst(env["LIBRARY_OVERLAY"])}, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr, success = run_command(command, env={"LD_LIBRARY_PATH" : env.subst(env["LIBRARY_OVERLAY"])}, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    #= process.communicate()
-    if not success: #process.returncode != 0:
+    if not success:
         return stderr
     return None
 
@@ -184,10 +171,8 @@ def standard_search(target, source, env):
     data_list, isym, idx, pad, queryph = source[0:5]
     args = source[-1].read()
     command = env.subst("${BABEL_REPO}/KWS/bin64/stdsearch -F ${TARGET} -i ${SOURCES[2]} -b %(PREFIX)s -s ${SOURCES[1]} -p ${SOURCES[3]} -d ${SOURCES[0]} -a %(TITLE)s -m %(PRECISION)s ${SOURCES[4]}" % args, target=target, source=source)
-    #process = subprocess.Popen(shlex.split(command), env={"LD_LIBRARY_PATH" : env.subst(env["LIBRARY_OVERLAY"])}, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr, success = run_command(command, env={"LD_LIBRARY_PATH" : env.subst(env["LIBRARY_OVERLAY"])}, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    #= process.communicate()
-    if not success: #process.returncode != 0:
+    if not success:
         return stderr
     return None
 
@@ -204,8 +189,6 @@ def merge(target, source, env):
     open(target[1].rstr(), "w").write("\n".join([x.rstr() for x in source[1:-1]]))
     if args["MODE"] == "merge-atwv":
         pass
-        #print_query_term_map_list = "${BABEL_REPO}/KWS/scripts/printQueryTermList.prl -prefix=${PREFIX} -padlength=${PADLENGTH} ${QUERY_FILE} > ${QUERY_TERM}"
-        #merge_search_from_par_index = "${BABEL_REPO}/KWS/scripts/mergeSearchFromParIndex.prl -hrsaudio=${HOURS} -beta=${BETA} ${QUERY_TERM} ${RESULT_LIST} > ${RESULT}"
     else:        
         merge_search_from_par_index = "${BABEL_REPO}/KWS/scripts/mergeSearchFromParIndex.prl -force-decision=\"YES\" ${TARGETS[0]} ${TARGETS[1]}"
         stdout, stderr, success = run_command(env.subst(merge_search_from_par_index, target=target, source=source), env={"LD_LIBRARY_PATH" : env.subst("${LIBRARY_OVERLAY}")})

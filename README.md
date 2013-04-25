@@ -59,3 +59,8 @@ Current State
 Right now, I believe everything is working up until the very final "scoring" action, which
 is BABEL12_Scorer/BABEL13_Scorer/KWSEval.py or something similar, depending on which
 version you look at.  
+
+There is a first attempt at scoring, which you can see as the commented code at the end of
+site_scons/kws_tools.py and the final two comments at the end of SConstruct.  It doesn't
+work, but a fair number of the ugly boilerplate that will be necessary, such as a bunch
+of Perl libraries, have been installed under /export/projects/nlp/tools/overlay_fc11.
