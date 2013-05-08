@@ -10,6 +10,7 @@ vars = Variables("custom.py")
 vars.AddVariables(
     ("OUTPUT_WIDTH", "", 130),
     ("BABEL_REPO", "", None),
+    ("BABEL_RESOURCES", "", None),
     ("F4DE", "", None),
     ("INDUS_DB", "", None),
     ("JAVA_NORM", "", "${BABEL_REPO}/KWS/examples/babel-dryrun/javabin"),
@@ -142,14 +143,15 @@ for name, experiment in env["EXPERIMENTS"].iteritems():
     iv_oov = env.MergeIVOOV(os.path.join(base_path, "iv_oov_results.txt"), 
                             [merged["in_vocabulary"], merged["out_of_vocabulary"], term_map])
 
-    norm = env.Normalize(os.path.join(base_path, "norm.txt"), 
-                         iv_oov)
+    norm = env.Normalize(os.path.join(base_path, "norm.kwslist.xml"), 
+                         [iv_oov, experiment["KW_FILE"]])
 
-    normSTO = env.NormalizeSTO(os.path.join(base_path, "normSTO.txt"), 
+    normSTO = env.NormalizeSTO(os.path.join(base_path, "normSTO.kwslist.xml"), 
                                norm)
 
-    # score = env.Score(os.path.join(base_path, "score.txt"), 
-    #                   [norm, env.Value(experiment)])
+    score = env.Score([os.path.join(base_path, x) for x in ["score.sum.txt", "score.bsum.txt"]], 
+                      #[experiment["KWS_FILE"], env.Value(experiment)])
+                      [norm, env.Value(experiment)])
 
     # scoreSTO = env.Score(os.path.join(base_path, "scoreSTO.txt"), 
     #                      [normSTO, env.Value(experiment)])

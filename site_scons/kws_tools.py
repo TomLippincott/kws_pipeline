@@ -13,6 +13,8 @@ import gzip
 import subprocess
 import shlex
 import time
+import shutil
+import tempfile
 
 def run_command(cmd, env={}, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE):
     """
@@ -198,6 +200,8 @@ def merge(target, source, env):
 
 def merge_scores(target, source, env):
     stdout, stderr, success = run_command(env.subst("${BABEL_REPO}/KWS/scripts/merge.scores.sumpost.norm.pl 1 ${SOURCES[0]}", target=target, source=source), env={"LD_LIBRARY_PATH" : env.subst("${LIBRARY_OVERLAY}")})
+    if not success:
+        return stderr
     open(target[0].rstr(), "w").write(stdout)
     return None
 
@@ -208,7 +212,15 @@ def merge_iv_oov(target, source, env):
     return None
 
 def normalize(target, source, env):
-    stdout, stderr, success = run_command(env.subst("python ${BABEL_REPO}/KWS/scripts/F4DENormalization.py ${SOURCE} ${TARGET}", target=target, source=source))
+    tmpfile_fid, tmpfile_name = tempfile.mkstemp()
+    res_xml = et.parse(open(source[0].rstr()))
+    kw_ids = set([x.get("kwid") for x in et.parse(open(source[1].rstr())).getiterator("kw")])
+    bad = [x for x in res_xml.getiterator("detected_termlist") if x.get("termid") not in kw_ids]
+    for b in bad:
+        res_xml.getroot().remove(b)
+    res_xml.write(tmpfile_name)
+    stdout, stderr, success = run_command(env.subst("python ${BABEL_REPO}/KWS/scripts/F4DENormalization.py ${SOURCE} ${TARGET}", target=target, source=tmpfile_name))
+    os.remove(tmpfile_name)
     if not success:
         print stderr
     return None
@@ -219,21 +231,21 @@ def normalize_sum_to_one(target, source, env):
         return stderr
     return None
 
-# def score(target, source, env):
-#     args = source[-1].read()
-#     if not os.path.exists("work/tempA"):
-#         os.mkdir("work/tempA")
-#     if not os.path.exists("work/tempB"):
-#         os.mkdir("work/tempB")
-#     theargs = {}
-#     theargs.update(args)
-#     theargs.update({"TEMP_DIR" : "work/tempA", "RES_DIR" : "work/tempB", "SYS_FILE" : source[0].rstr()})
-#     cmd = env.subst("${F4DE}/KWSEval/tools/KWSEval/KWSEval.pl -sys ${SOURCES[0]} -e %(ECF_FILE)s -r %(RTTM_FILE)s -s %(SYS_FILE)s -t %(KW_FILE)s -f temp -X" % theargs,
-#                     source=source, target=target)                    
-#     stdout, stderr, success = run_command(cmd, overlay=env["OVERLAY"], f4de_base=env["F4DE"])
-#     if not success:
-#         print stdout, stderr
-#     return None
+def score(target, source, env):
+    args = source[-1].read()
+    tmpfile_fid, tmpfile_name = tempfile.mkstemp()
+    theargs = {}
+    theargs.update(args)
+    theargs.update({"KWS_LIST_FILE" : source[0].rstr(), "PREFIX" : tmpfile_name})
+    cmd = env.subst("${F4DE}/KWSEval/tools/KWSEval/KWSEval.pl -e %(ECF_FILE)s -r %(RTTM_FILE)s -s %(KWS_LIST_FILE)s -t %(KW_FILE)s -o -b -f %(PREFIX)s" % theargs,
+                    source=source, target=target)                    
+    stdout, stderr, success = run_command(cmd, env={"LD_LIBRARY_PATH" : env.subst("${LIBRARY_OVERLAY}"), "PERL5LIB" : env.subst("${OVERLAY}/lib/perl5/site_perl:${F4DE}/common/lib:${F4DE}/KWSEval/lib/"), "PATH" : "/usr/bin"})
+    if not success:
+        return stderr
+    os.remove(tmpfile_name)
+    shutil.move("%s.sum.txt" % tmpfile_name, target[0].rstr())
+    shutil.move("%s.bsum.txt" % tmpfile_name, target[1].rstr())
+    return None
 
 def TOOLS_ADD(env):
     env.Append(BUILDERS = {'LatticeList' : Builder(action=lattice_list), 
@@ -254,6 +266,6 @@ def TOOLS_ADD(env):
                            'MergeIVOOV' : Builder(action=merge_iv_oov),
                            'Normalize' : Builder(action=normalize),
                            'NormalizeSTO' : Builder(action=normalize_sum_to_one),
-                           #'Score' : Builder(action=score),
+                           'Score' : Builder(action=score),
                            })
                
