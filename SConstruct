@@ -1,3 +1,4 @@
+import sys
 import os.path
 import logging
 import kws_tools
@@ -17,13 +18,9 @@ vars.AddVariables(
     ("OVERLAY", "", None),
     ("LIBRARY_OVERLAY", "", "${OVERLAY}/lib:${OVERLAY}/lib64"),
     ("EXPERIMENTS", "", {}),
+    ("LOG_LEVEL", "", logging.INFO),
+    ("LOG_DESTINATION", "", sys.stdout),
     )
-
-
-#
-# initialize the Python logging system (though we don't really use it in this build, could be useful later)
-#
-logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S', level=logging.INFO)
 
 #
 # create the actual build environment we'll be using: basically, just import the builders from site_scons/kws_tools.py
@@ -32,6 +29,14 @@ env = Environment(variables=vars, ENV={}, TARFLAGS="-c -z", TARSUFFIX=".tgz",
                   tools=["default", "textfile"] + [x.TOOLS_ADD for x in [kws_tools]],
                   BUILDERS={"CopyFile" : Builder(action="cp ${SOURCE} ${TARGET}")}
                   )
+
+#
+# initialize the Python logging system (though we don't really use it in this build, could be useful later)
+#
+if isinstance(env["LOG_DESTINATION"], basestring):
+    logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S', level=env["LOG_LEVEL"], filename=env["LOG_DESTINATION"])
+else:
+    logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S', level=env["LOG_LEVEL"])
 
 #
 # each Builder emits a string describing what it's doing (target, source, etc), but with thousands of
@@ -72,14 +77,21 @@ for name, experiment in env["EXPERIMENTS"].iteritems():
     iv_query_terms = experiment["IV_QUERY_TERMS"]
     oov_query_terms = experiment["OOV_QUERY_TERMS"]
     term_map = experiment["TERM_MAP"]
+    kw_file = experiment["KW_FILE"]
 
+    iv_query_terms, oov_query_terms, term_map, kw_file, word_to_word_fst = env.AlterIVOOV([os.path.join(base_path, x) for x in 
+                                                                                           ["iv_terms.txt", "oov_terms.txt", "term_map.txt", "kw_file.xml", "word_to_word.fst"]], 
+                                                                                          [iv_query_terms, oov_query_terms, iv_dict, term_map, kw_file, word_to_word_fst])
+    
     full_lattice_list = env.LatticeList(os.path.join(base_path, "lattice_list.txt"),
                                         [dbfile, env.Value(experiment["LATTICE_DIRECTORY"])])
 
-    wordpron = env.WordPronounceSymTable(os.path.join(base_path, "in_vocabulary_sym_table.txt"),
+    lattice_lists = env.SplitList([os.path.join(base_path, "lattice_list_%d.txt" % (n + 1)) for n in range(experiment["JOBS"])], full_lattice_list)
+
+    wordpron = env.WordPronounceSymTable(os.path.join(base_path, "in_vocabulary_symbol_table.txt"),
                                          iv_dict)
 
-    isym = env.CleanPronounceSymTable(os.path.join(base_path, "cleaned_in_vocabulary_sym_table.txt"),
+    isym = env.CleanPronounceSymTable(os.path.join(base_path, "cleaned_in_vocabulary_symbol_table.txt"),
                                       wordpron)
 
     mdb = env.MungeDatabase(os.path.join(base_path, "munged_database.txt"),
@@ -94,16 +106,11 @@ for name, experiment in env["EXPERIMENTS"].iteritems():
                                                             "subdir_style" : "hub4",
                                                             "LATTICE_DIR" : experiment["LATTICE_DIRECTORY"],
                                                             })], BASE_PATH=base_path)
+
+    data_lists = env.SplitList([os.path.join(base_path, "data_list_%d.txt" % (n + 1)) for n in range(experiment["JOBS"])], full_data_list)
     
     p2p_fst = env.FSTCompile(os.path.join(base_path, "p2p_fst.txt"),
                              [isym, word_to_word_fst])
-
-    data_lists = env.SplitList([os.path.join(base_path, "data_list_%d.txt" % (n + 1)) for n in range(experiment["JOBS"])],
-                               [full_data_list, env.Value({"n" : experiment["JOBS"]})], BASE_PATH=os.path.join(base_path, "data_lists"))
-
-    lattice_lists = env.SplitList([os.path.join(base_path, "lattice_list_%d.txt" % (n + 1)) for n in range(experiment["JOBS"])],
-                                  [full_lattice_list, env.Value({"n" : experiment["JOBS"]})], BASE_PATH=os.path.join(base_path, "lattice_lists"))
-
 
     wtp_lattices = []
 
@@ -116,10 +123,10 @@ for name, experiment in env["EXPERIMENTS"].iteritems():
 
         fl = env.GetFileList(os.path.join(base_path, "file_list-%d.txt" % (i + 1)), 
                              [data_list, wp])
-        idx = env.BuildIndex(os.path.join(base_path, "index-%d.txt" % (i + 1)),
+        idx = env.BuildIndex(os.path.join(base_path, "index-%d.fst" % (i + 1)),
                              fl)
 
-        wtp_lattices.append((wp[0], data_list, lattice_list, fl, idx))
+        wtp_lattices.append((wp, data_list, lattice_list, fl, idx))
 
     merged = {}
     for query_type, query_file in zip(["in_vocabulary", "out_of_vocabulary"], [iv_query_terms, oov_query_terms]):
@@ -140,18 +147,17 @@ for name, experiment in env["EXPERIMENTS"].iteritems():
         om = env.MergeScores(os.path.join(base_path, query_type, "res"), 
                              res)
 
-    iv_oov = env.MergeIVOOV(os.path.join(base_path, "iv_oov_results.txt"), 
+    iv_oov = env.MergeIVOOV(os.path.join(base_path, "iv_oov_results.xml"), 
                             [merged["in_vocabulary"], merged["out_of_vocabulary"], term_map])
 
     norm = env.Normalize(os.path.join(base_path, "norm.kwslist.xml"), 
-                         [iv_oov, experiment["KW_FILE"]])
+                         [iv_oov, kw_file])
 
     normSTO = env.NormalizeSTO(os.path.join(base_path, "normSTO.kwslist.xml"), 
                                norm)
 
     score = env.Score([os.path.join(base_path, x) for x in ["score.sum.txt", "score.bsum.txt"]], 
-                      #[experiment["KWS_FILE"], env.Value(experiment)])
                       [norm, env.Value(experiment)])
 
-    # scoreSTO = env.Score(os.path.join(base_path, "scoreSTO.txt"), 
-    #                      [normSTO, env.Value(experiment)])
+    scoreSTO = env.Score([os.path.join(base_path, "%s.STO.txt" % x) for x in ["score.sum", "score.bsum"]], 
+                         [normSTO, env.Value(experiment)])

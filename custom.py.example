@@ -14,11 +14,11 @@
 #INDUS_DB = "${BABEL_RESOURCES}/IndusDB"
 
 ## list of experiments to perform:
+##   LATTICE_DIRECTORY: contains output from ASR (gzipped fsm files)
+##   DATABASE         : contains segmentation information for lattices
 ##   WORD_TO_WORD_FST : weighted edges between words (currently, words only attach to themselves, i.e. unused)
 ##   DICTIONARY       : words-to-vocalizations
-##   DATABASE         : 
 ##   QUERY_TERMS      : search terms, one per line
-##   LATTICE_DIRECTORY: contains output from ASR (gzipped fsm files)
 EXPERIMENTS = {
     # "anahita_tagalog_baseline" : {
     #     "LATTICE_DIRECTORY" : "/localtemp/tom_local/Baseline/Tagalog/dlatSA/lat",

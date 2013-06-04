@@ -64,3 +64,8 @@ There is a first attempt at scoring, which you can see as the commented code at 
 site_scons/kws_tools.py and the final two comments at the end of SConstruct.  It doesn't
 work, but a fair number of the ugly boilerplate that will be necessary, such as a bunch
 of Perl libraries, have been installed under /export/projects/nlp/tools/overlay_fc11.
+
+Text::CSV
+Statistics::Descriptive
+Math::Random::OO
+xmllint
