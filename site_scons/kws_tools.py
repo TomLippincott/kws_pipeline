@@ -38,13 +38,10 @@ def lattice_list(target, source, env):
     """
     Creates a file that's simply a list of the lattices in the given directory (absolute paths, one per line).
     """
-    #with meta_open(source[0].rstr()) as fd:
-    #    db_files = set(["%s.fsm.gz" % ("#".join(x.split()[0:2])) for x in fd])
     lattice_dir = source[1].read()
     if not os.path.exists(lattice_dir):
         return "No such directory: %s" % lattice_dir
     meta_open(target[0].rstr(), "w").write("\n".join([os.path.abspath(x) for x in glob(os.path.join(lattice_dir, "*"))]) + "\n")
-    #meta_open(target[0].rstr(), "w").write("\n".join([os.path.abspath(x) for x in glob(os.path.join(lattice_dir, "*")) if os.path.basename(x) in db_files]) + "\n")
     return None
 
 def word_pronounce_sym_table(target, source, env):

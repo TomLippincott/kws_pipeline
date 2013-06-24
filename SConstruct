@@ -78,6 +78,7 @@ for name, experiment in env["EXPERIMENTS"].iteritems():
     oov_query_terms = experiment["OOV_QUERY_TERMS"]
     term_map = experiment["TERM_MAP"]
     kw_file = experiment["KW_FILE"]
+    lang_id = experiment["LANGUAGE_ID"]
 
     iv_query_terms, oov_query_terms, term_map, kw_file, word_to_word_fst = env.AlterIVOOV([os.path.join(base_path, x) for x in 
                                                                                            ["iv_terms.txt", "oov_terms.txt", "term_map.txt", "kw_file.xml", "word_to_word.fst"]], 
@@ -117,7 +118,7 @@ for name, experiment in env["EXPERIMENTS"].iteritems():
 
     for i, (data_list, lattice_list) in enumerate(zip(data_lists, lattice_lists)):
         wp = env.WordToPhoneLattice(os.path.join(base_path, "lattices", "lattice_generation-%d.stamp" % (i + 1)), 
-                                    [data_list, lattice_list, wordpron, iv_dict, env.Value({"PRUNE_THRESHOLD" : 6,
+                                    [data_list, lattice_list, wordpron, iv_dict, env.Value({"PRUNE_THRESHOLD" : -1,
                                                                                             "EPSILON_SYMBOLS" : "'<s>,</s>,~SIL,<HES>'",
                                                                                             })])
 
@@ -135,16 +136,16 @@ for name, experiment in env["EXPERIMENTS"].iteritems():
         searches = []
         for i, (wtp_lattice, data_list, lattice_list, fl, idx) in enumerate(wtp_lattices):
             searches.append(env.StandardSearch(os.path.join(base_path, query_type, "search_output-%d.txt" % (i + 1)),
-                                               [data_list, isym, idx, padfst, queries, env.Value({"PRECISION" : "'%.4d'", "PREFIX" : "KW106-", "TITLE" : "std.xml"})]))
+                                               [data_list, isym, idx, padfst, queries, env.Value({"PRECISION" : "'%.4d'", "PREFIX" : "KW%s-" % (lang_id), "TITLE" : "std.xml"})]))
 
 
 
         qtl, res_list, res, ures = env.Merge([os.path.join(base_path, query_type, x) for x in ["ids_to_query_terms.txt", "result_file_list.txt", "search_results.xml", "unique_search_results.xml"]], 
                                              [query_file] + searches + [env.Value({"MODE" : "merge-default",
                                                                                    "PADLENGTH" : 4,                                    
-                                                                                   "PREFIX" : "KW106-"})])
+                                                                                   "PREFIX" : "KW%s-" % (lang_id)})])
         merged[query_type] = ures
-        om = env.MergeScores(os.path.join(base_path, query_type, "res"), 
+        om = env.MergeScores(os.path.join(base_path, query_type, "results.xml"), 
                              res)
 
     iv_oov = env.MergeIVOOV(os.path.join(base_path, "iv_oov_results.xml"), 
