@@ -70,19 +70,27 @@ for name, experiment in env["EXPERIMENTS"].iteritems():
     base_path = os.path.join("work", name)
 
     # just make some local variables from the experiment definition (for convenience)
-    word_to_word_fst = experiment["WORD_TO_WORD_FST"]
+    #word_to_word_fst = experiment["WORD_TO_WORD_FST"]
     iv_dict = experiment["IV_DICTIONARY"]
     oov_dict = experiment["OOV_DICTIONARY"]
     dbfile = experiment["DATABASE"]
-    iv_query_terms = experiment["IV_QUERY_TERMS"]
-    oov_query_terms = experiment["OOV_QUERY_TERMS"]
-    term_map = experiment["TERM_MAP"]
+    #iv_query_terms = experiment["IV_QUERY_TERMS"]
+    #oov_query_terms = experiment["OOV_QUERY_TERMS"]
+    #term_map = experiment["TERM_MAP"]
     kw_file = experiment["KW_FILE"]
     lang_id = experiment["LANGUAGE_ID"]
 
-    iv_query_terms, oov_query_terms, term_map, kw_file, word_to_word_fst = env.AlterIVOOV([os.path.join(base_path, x) for x in 
-                                                                                           ["iv_terms.txt", "oov_terms.txt", "term_map.txt", "kw_file.xml", "word_to_word.fst"]], 
-                                                                                          [iv_query_terms, oov_query_terms, iv_dict, term_map, kw_file, word_to_word_fst])
+
+    iv_query_terms, oov_query_terms, term_map, word_to_word_fst = env.QueryFiles([os.path.join(base_path, x) for x in ["iv_queries.txt", 
+                                                                                                                       "oov_queries.txt",
+                                                                                                                       "term_map.txt",
+                                                                                                                       "word_to_word.fst"]], [kw_file, iv_dict])
+
+    #iv_query_terms, oov_query_terms, term_map, kw_file, word_to_word_fst = env.AlterIVOOV([os.path.join(base_path, x) for x in 
+    #                                                                                       ["iv_terms.txt", "oov_terms.txt", "term_map.txt", "kw_file.xml", "word_to_word.fst"]], 
+    #                                                                                      [iv_query_terms, oov_query_terms, iv_dict, term_map, kw_file, word_to_word_fst])
+    #word_to_word_fst = env.WordToWordFST(os.path.join(base_path, "word_to_word.fst"), [])
+    #dbfile = env.DatabaseFile(os.path.join(base_path, "dbfile.txt"), env.Value(experiment["LATTICE_DIRECTORY"]))
     
     full_lattice_list = env.LatticeList(os.path.join(base_path, "lattice_list.txt"),
                                         [dbfile, env.Value(experiment["LATTICE_DIRECTORY"])])

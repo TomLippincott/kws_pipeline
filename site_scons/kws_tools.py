@@ -34,6 +34,34 @@ def run_command(cmd, env={}, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stde
     out, err = process.communicate()
     return out, err, process.returncode == 0
 
+def query_files(target, source, env):
+    # OUTPUT:
+    # iv oov map w2w <- 
+    # INPUT: kw, iv
+    # pad id to 4
+    with meta_open(source[0].rstr()) as kw_fd, meta_open(source[1].rstr()) as iv_fd:
+        keywords = set([(x.get("kwid"), x.find("kwtext").text.lower()) for x in et.parse(kw_fd).getiterator("kw")])
+        vocab = set([x.split()[1].strip() for x in iv_fd])
+        iv_keywords = sorted([(int(tag.split("-")[1]), tag, term) for tag, term in keywords if all([y in vocab for y in term.split()])])
+        oov_keywords = sorted([(int(tag.split("-")[1]), tag, term) for tag, term in keywords if any([y not in vocab for y in term.split()])])
+        #print oov_keywords
+        #print len(keywords), len(iv_keywords), len(oov_keywords)
+        with meta_open(target[0].rstr(), "w") as iv_ofd, meta_open(target[1].rstr(), "w") as oov_ofd, meta_open(target[2].rstr(), "w") as map_ofd, meta_open(target[3].rstr(), "w") as w2w_ofd:
+            iv_ofd.write("\n".join([x[2] for x in iv_keywords]))
+            oov_ofd.write("\n".join([x[2] for x in oov_keywords]))
+            map_ofd.write("\n".join(["%s %.4d %.4d" % x for x in 
+                                     sorted([("iv", gi, li) for li, (gi, tag, term) in enumerate(iv_keywords, 1)] + 
+                                            [("oov", gi, li) for li, (gi, tag, term) in enumerate(oov_keywords, 1)], lambda x, y : cmp(x[1], y[1]))]))
+            w2w_ofd.write("\n".join(["0 0 %s %s 0" % (x, x) for x in vocab] + ["0"]))
+            pass
+    return None
+
+def word_to_word_fst(target, source, env):
+    return None
+
+def database_file(target, source, env):
+    return None
+
 def lattice_list(target, source, env):
     """
     Creates a file that's simply a list of the lattices in the given directory (absolute paths, one per line).
@@ -428,6 +456,7 @@ def alter_iv_oov(target, source, env):
 
 def TOOLS_ADD(env):
     env.Append(BUILDERS = {'LatticeList' : Builder(action=lattice_list), 
+                           'WordToWordFST' : Builder(action=word_to_word_fst),
                            'WordPronounceSymTable' : Builder(action=word_pronounce_sym_table), 
                            'CleanPronounceSymTable' : Builder(action=clean_pronounce_sym_table), 
                            'MungeDatabase' : Builder(action=munge_dbfile), 
@@ -447,5 +476,7 @@ def TOOLS_ADD(env):
                            'NormalizeSTO' : Builder(action=normalize_sum_to_one),
                            'Score' : Builder(action=score),
                            'AlterIVOOV' : Builder(action=alter_iv_oov),
+                           "QueryFiles" : Builder(action=query_files),
+                           "DatabaseFile" : Builder(action=database_file),
                            })
                
