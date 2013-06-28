@@ -410,7 +410,7 @@ def normalize(target, source, env):
     for b in bad:
         res_xml.getroot().remove(b)
     res_xml.write(tmpfile_name)
-    stdout, stderr, success = run_command(env.subst("python ${BABEL_REPO}/KWS/scripts/F4DENormalization.py ${SOURCE} ${TARGET}", target=target, source=tmpfile_name))
+    stdout, stderr, success = run_command(env.subst("${OVERLAY}/bin/python ${BABEL_REPO}/KWS/scripts/F4DENormalization.py ${SOURCE} ${TARGET}", target=target, source=tmpfile_name))
     os.remove(tmpfile_name)
     if not success:
         print stderr
