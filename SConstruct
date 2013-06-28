@@ -70,21 +70,16 @@ for name, experiment in env["EXPERIMENTS"].iteritems():
     base_path = os.path.join("work", name)
 
     # just make some local variables from the experiment definition (for convenience)
-    #word_to_word_fst = experiment["WORD_TO_WORD_FST"]
     iv_dict = experiment["IV_DICTIONARY"]
     oov_dict = experiment["OOV_DICTIONARY"]
     dbfile = experiment["DATABASE"]
-    #iv_query_terms = experiment["IV_QUERY_TERMS"]
-    #oov_query_terms = experiment["OOV_QUERY_TERMS"]
-    #term_map = experiment["TERM_MAP"]
     kw_file = experiment["KW_FILE"]
-    lang_id = experiment["LANGUAGE_ID"]
 
-
-    iv_query_terms, oov_query_terms, term_map, word_to_word_fst = env.QueryFiles([os.path.join(base_path, x) for x in ["iv_queries.txt", 
-                                                                                                                       "oov_queries.txt",
-                                                                                                                       "term_map.txt",
-                                                                                                                       "word_to_word.fst"]], [kw_file, iv_dict])
+    iv_query_terms, oov_query_terms, term_map, word_to_word_fst, kw_file = env.QueryFiles([os.path.join(base_path, x) for x in ["iv_queries.txt", 
+                                                                                                                                "oov_queries.txt",
+                                                                                                                                "term_map.txt",
+                                                                                                                                "word_to_word.fst",
+                                                                                                                                "kwfile.xml"]], [kw_file, iv_dict])
 
     #iv_query_terms, oov_query_terms, term_map, kw_file, word_to_word_fst = env.AlterIVOOV([os.path.join(base_path, x) for x in 
     #                                                                                       ["iv_terms.txt", "oov_terms.txt", "term_map.txt", "kw_file.xml", "word_to_word.fst"]], 
@@ -94,6 +89,8 @@ for name, experiment in env["EXPERIMENTS"].iteritems():
     
     full_lattice_list = env.LatticeList(os.path.join(base_path, "lattice_list.txt"),
                                         [dbfile, env.Value(experiment["LATTICE_DIRECTORY"])])
+
+
 
     lattice_lists = env.SplitList([os.path.join(base_path, "lattice_list_%d.txt" % (n + 1)) for n in range(experiment["JOBS"])], full_lattice_list)
 
@@ -115,6 +112,8 @@ for name, experiment in env["EXPERIMENTS"].iteritems():
                                                             "subdir_style" : "hub4",
                                                             "LATTICE_DIR" : experiment["LATTICE_DIRECTORY"],
                                                             })], BASE_PATH=base_path)
+
+    ecf_file = env.ECFFile(os.path.join(base_path, "ecf.xml"), mdb)
 
     data_lists = env.SplitList([os.path.join(base_path, "data_list_%d.txt" % (n + 1)) for n in range(experiment["JOBS"])], full_data_list)
     
@@ -144,14 +143,15 @@ for name, experiment in env["EXPERIMENTS"].iteritems():
         searches = []
         for i, (wtp_lattice, data_list, lattice_list, fl, idx) in enumerate(wtp_lattices):
             searches.append(env.StandardSearch(os.path.join(base_path, query_type, "search_output-%d.txt" % (i + 1)),
-                                               [data_list, isym, idx, padfst, queries, env.Value({"PRECISION" : "'%.4d'", "PREFIX" : "KW%s-" % (lang_id), "TITLE" : "std.xml"})]))
+                                               [data_list, isym, idx, padfst, queries, env.Value({"PRECISION" : "'%.4d'", "TITLE" : "std.xml"})]))
 
 
 
         qtl, res_list, res, ures = env.Merge([os.path.join(base_path, query_type, x) for x in ["ids_to_query_terms.txt", "result_file_list.txt", "search_results.xml", "unique_search_results.xml"]], 
                                              [query_file] + searches + [env.Value({"MODE" : "merge-default",
                                                                                    "PADLENGTH" : 4,                                    
-                                                                                   "PREFIX" : "KW%s-" % (lang_id)})])
+                                                                                   "PREFIX" : ""})])
+
         merged[query_type] = ures
         om = env.MergeScores(os.path.join(base_path, query_type, "results.xml"), 
                              res)
@@ -166,7 +166,7 @@ for name, experiment in env["EXPERIMENTS"].iteritems():
                                norm)
 
     score = env.Score([os.path.join(base_path, x) for x in ["score.sum.txt", "score.bsum.txt"]], 
-                      [norm, env.Value(experiment)])
+                      [norm, kw_file, env.Value({"RTTM_FILE" : experiment["RTTM_FILE"], "ECF_FILE" : ecf_file[0].rstr()})]) #experiment)])
 
     scoreSTO = env.Score([os.path.join(base_path, "%s.STO.txt" % x) for x in ["score.sum", "score.bsum"]], 
-                         [normSTO, env.Value(experiment)])
+                         [normSTO, kw_file, env.Value({"RTTM_FILE" : experiment["RTTM_FILE"], "ECF_FILE" : ecf_file[0].rstr()})]) #experiment)])

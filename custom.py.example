@@ -21,23 +21,19 @@ import os.path
 ## list of experiments to perform:
 ##   LATTICE_DIRECTORY: contains output from ASR (gzipped fsm files)
 ##   DATABASE         : contains segmentation information for lattices
-##   WORD_TO_WORD_FST : weighted edges between words (currently, words only attach to themselves, i.e. unused)
-##   DICTIONARY       : words-to-vocalizations
-##   QUERY_TERMS      : search terms, one per line
+##   IV_DICTIONARY    : vocalizations for IV words
+##   OOV_DICTIONARY   : vocalizations for OOV query terms
+##   KW_FILE          : XML of search terms
+##   RTTM_FILE        : transcript from IndusDB
+##   JOBS             : number of batches to split data into (for parallel processing)
 EXPERIMENTS = {
     # "anahita_tagalog_baseline" : {
-    #     "LATTICE_DIRECTORY" : "/localtemp/tom_local/Baseline/Tagalog/dlatSA/lat",
-    #     "DATABASE" : "/export/projects/nlp/BABEL/VT-2-5-babel/ATR-babel/segment/db/db.dev.auto.128-256-0.2",
-    #     "WORD_TO_WORD_FST" : "${BABEL_REPO}/KWS/resources/106/full/kws-resources/w2w.fst",
+    #     "LATTICE_DIRECTORY" : "/localtemp/ab3744/Baseline/Tagalog/lat",
+    #     "DATABASE" : "${BABEL_REPO}/KWS/examples/babel-tagalog-fulllp/segment/db/db.dev.auto.128-256-0.2",
     #     "IV_DICTIONARY" : "${BABEL_REPO}/KWS/resources/106/full/kws-resources/dict.IV.v2w.gz",
     #     "OOV_DICTIONARY" : "${BABEL_REPO}/KWS/resources/106/full/kws-resources/dict.OOV.v2p",
-    #     "IV_QUERY_TERMS" : "${BABEL_REPO}/KWS/resources/106/full/kws-resources/queryterms.iv",
-    #     "OOV_QUERY_TERMS" : "${BABEL_REPO}/KWS/resources/106/full/kws-resources/queryterms.oov",
-    #     "TERM_MAP" : "${BABEL_REPO}/KWS/resources/106/full/kws-resources/term.map",
-    #     "EXPID" : "tagalog_baseline_LoreleiLattices",
-    #     "ECF_FILE" : "/localtemp/tom_local/example/babel106b-v0.2g_conv-dev.ecf.xml",
-    #     "RTTM_FILE" : "/localtemp/tom_local/example/babel106b-v0.2g_conv-dev.rttm",
-    #     "KW_FILE" : "/localtemp/tom_local/example/babel106b-v0.2g_conv-dev.kwlist.xml",
+    #     "RTTM_FILE" : "${BABEL_RESOURCES}/IndusDB/babel106b-v0.2g_conv-dev/babel106b-v0.2g_conv-dev.rttm",
+    #     "KW_FILE" : "${BABEL_RESOURCES}/IndusDB/babel106b-v0.2g_conv-dev.kwlist2.xml",
     #     "JOBS" : 5,
     #     },    
     }

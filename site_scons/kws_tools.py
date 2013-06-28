@@ -40,23 +40,47 @@ def query_files(target, source, env):
     # INPUT: kw, iv
     # pad id to 4
     with meta_open(source[0].rstr()) as kw_fd, meta_open(source[1].rstr()) as iv_fd:
-        keywords = set([(x.get("kwid"), x.find("kwtext").text.lower()) for x in et.parse(kw_fd).getiterator("kw")])
+        keyword_xml = et.parse(kw_fd)
+        keywords = set([(x.get("kwid"), x.find("kwtext").text.lower()) for x in keyword_xml.getiterator("kw")])
         vocab = set([x.split()[1].strip() for x in iv_fd])
-        iv_keywords = sorted([(int(tag.split("-")[1]), tag, term) for tag, term in keywords if all([y in vocab for y in term.split()])])
-        oov_keywords = sorted([(int(tag.split("-")[1]), tag, term) for tag, term in keywords if any([y not in vocab for y in term.split()])])
+        iv_keywords = sorted([(int(tag.split("-")[-1]), tag, term) for tag, term in keywords if all([y in vocab for y in term.split()])])
+        oov_keywords = sorted([(int(tag.split("-")[-1]), tag, term) for tag, term in keywords if any([y not in vocab for y in term.split()])])
         #print oov_keywords
         #print len(keywords), len(iv_keywords), len(oov_keywords)
-        with meta_open(target[0].rstr(), "w") as iv_ofd, meta_open(target[1].rstr(), "w") as oov_ofd, meta_open(target[2].rstr(), "w") as map_ofd, meta_open(target[3].rstr(), "w") as w2w_ofd:
+        with meta_open(target[0].rstr(), "w") as iv_ofd, meta_open(target[1].rstr(), "w") as oov_ofd, meta_open(target[2].rstr(), "w") as map_ofd, meta_open(target[3].rstr(), "w") as w2w_ofd, meta_open(target[4].rstr(), "w") as kw_ofd:
             iv_ofd.write("\n".join([x[2] for x in iv_keywords]))
             oov_ofd.write("\n".join([x[2] for x in oov_keywords]))
             map_ofd.write("\n".join(["%s %.4d %.4d" % x for x in 
                                      sorted([("iv", gi, li) for li, (gi, tag, term) in enumerate(iv_keywords, 1)] + 
                                             [("oov", gi, li) for li, (gi, tag, term) in enumerate(oov_keywords, 1)], lambda x, y : cmp(x[1], y[1]))]))
             w2w_ofd.write("\n".join(["0 0 %s %s 0" % (x, x) for x in vocab] + ["0"]))
+            for x in keyword_xml.getiterator("kw"):
+                #print dir(x)
+                x.set("kwid", "KW-%s" % x.get("kwid").split("-")[-1])
+                #x.set("kwid", n)
+            keyword_xml.write(kw_ofd) #.write(et.tostring(keyword_xml.))
             pass
     return None
 
-def word_to_word_fst(target, source, env):
+def ecf_file(target, source, env):
+    with open(source[0].rstr()) as fd:
+        files = [(fname, int(chan), float(begin), float(end)) for fname, num, sph, chan, begin, end in [line.split() for line in fd]]
+        data = {}
+        for fname in set([x[0] for x in files]):
+            relevant = [x for x in files if x[0] == fname]
+            start = sorted(relevant, lambda x, y : cmp(x[2], y[2]))[0][2]
+            end = sorted(relevant, lambda x, y : cmp(x[3], y[3]))[-1][3]
+            channels = relevant[0][1]
+            data[fname] = (channels, start, end)
+        total = sum([x[2] - x[1] for x in data.values()])
+        tb = et.TreeBuilder()
+        tb.start("ecf", {"source_signal_duration" : "%f" % total, "language" : "", "version" : ""})
+        for k, (channel, start, end) in data.iteritems():
+            tb.start("excerpt", {"audio_filename" : k, "channel" : str(channel), "tbeg" : str(start), "dur" : str(end-start), "source_type" : "splitcts"})
+            tb.end("excerpt")
+        tb.end("ecf")        
+        with open(target[0].rstr(), "w") as ofd:
+            ofd.write(et.tostring(tb.close()))
     return None
 
 def database_file(target, source, env):
@@ -309,7 +333,8 @@ Options:
     """
     data_list, isym, idx, pad, queryph = source[0:5]
     args = source[-1].read()
-    command = env.subst("${BABEL_REPO}/KWS/bin64/stdsearch -F ${TARGET} -i ${SOURCES[2]} -b %(PREFIX)s -s ${SOURCES[1]} -p ${SOURCES[3]} -d ${SOURCES[0]} -a %(TITLE)s -m %(PRECISION)s ${SOURCES[4]}" % args, target=target, source=source)
+    #command = env.subst("${BABEL_REPO}/KWS/bin64/stdsearch -F ${TARGET} -i ${SOURCES[2]} -s ${SOURCES[1]} -p ${SOURCES[3]} -d ${SOURCES[0]} -a %(TITLE)s -m %(PRECISION)s ${SOURCES[4]}" % args, target=target, source=source)
+    command = env.subst("${BABEL_REPO}/KWS/bin64/stdsearch -F ${TARGET} -i ${SOURCES[2]} -b KW- -s ${SOURCES[1]} -p ${SOURCES[3]} -d ${SOURCES[0]} -a %(TITLE)s -m %(PRECISION)s ${SOURCES[4]}" % args, target=target, source=source)
     stdout, stderr, success = run_command(command, env={"LD_LIBRARY_PATH" : env.subst(env["LIBRARY_OVERLAY"])}, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if not success:
         return stderr
@@ -324,7 +349,9 @@ def merge(target, source, env):
     output: 
     """
     args = source[-1].read()
-    stdout, stderr, success = run_command(env.subst("${BABEL_REPO}/KWS/scripts/printQueryTermList.prl -prefix=%(PREFIX)s -padlength=%(PADLENGTH)d ${SOURCES[0]}" % args, 
+    #stdout, stderr, success = run_command(env.subst("${BABEL_REPO}/KWS/scripts/printQueryTermList.prl -padlength=%(PADLENGTH)d ${SOURCES[0]}" % args, 
+    #                                                target=target, source=source), env={"LD_LIBRARY_PATH" : env.subst("${LIBRARY_OVERLAY}")})
+    stdout, stderr, success = run_command(env.subst("${BABEL_REPO}/KWS/scripts/printQueryTermList.prl -prefix=KW- -padlength=%(PADLENGTH)d ${SOURCES[0]}" % args, 
                                                     target=target, source=source), env={"LD_LIBRARY_PATH" : env.subst("${LIBRARY_OVERLAY}")})
     meta_open(target[0].rstr(), "w").write(stdout)
     meta_open(target[1].rstr(), "w").write("\n".join([x.rstr() for x in source[1:-1]]))
@@ -409,7 +436,7 @@ def score(target, source, env):
     theargs = {}
     theargs.update(args)
     theargs.update({"KWS_LIST_FILE" : source[0].rstr(), "PREFIX" : tmpfile_name})
-    cmd = env.subst("${F4DE}/KWSEval/tools/KWSEval/KWSEval.pl -e %(ECF_FILE)s -r %(RTTM_FILE)s -s %(KWS_LIST_FILE)s -t %(KW_FILE)s -o -b -f %(PREFIX)s" % theargs,
+    cmd = env.subst("${F4DE}/KWSEval/tools/KWSEval/KWSEval.pl -e %(ECF_FILE)s -r %(RTTM_FILE)s -s %(KWS_LIST_FILE)s -t ${SOURCES[1]} -o -b -f %(PREFIX)s" % theargs,
                     source=source, target=target)                    
     stdout, stderr, success = run_command(cmd, env={"LD_LIBRARY_PATH" : env.subst("${LIBRARY_OVERLAY}"), "PERL5LIB" : env.subst("${OVERLAY}/lib/perl5/site_perl:${F4DE}/common/lib:${F4DE}/KWSEval/lib/"), "PATH" : "/usr/bin"})
     if not success:
@@ -456,7 +483,7 @@ def alter_iv_oov(target, source, env):
 
 def TOOLS_ADD(env):
     env.Append(BUILDERS = {'LatticeList' : Builder(action=lattice_list), 
-                           'WordToWordFST' : Builder(action=word_to_word_fst),
+                           'ECFFile' : Builder(action=ecf_file),
                            'WordPronounceSymTable' : Builder(action=word_pronounce_sym_table), 
                            'CleanPronounceSymTable' : Builder(action=clean_pronounce_sym_table), 
                            'MungeDatabase' : Builder(action=munge_dbfile), 
