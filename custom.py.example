@@ -16,7 +16,7 @@ import os.path
 #INDUS_DB = "${BABEL_RESOURCES}/IndusDB"
 
 ## file to write log to
-#LOG_DESTINATION = "work/log.txt"
+#LOG_DESTINATION = "log.txt"
 
 ## list of experiments to perform:
 ##   LATTICE_DIRECTORY: contains output from ASR (gzipped fsm files)
