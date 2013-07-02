@@ -49,7 +49,7 @@ def query_files(target, source, env):
         #print len(keywords), len(iv_keywords), len(oov_keywords)
         with meta_open(target[0].rstr(), "w") as iv_ofd, meta_open(target[1].rstr(), "w") as oov_ofd, meta_open(target[2].rstr(), "w") as map_ofd, meta_open(target[3].rstr(), "w") as w2w_ofd, meta_open(target[4].rstr(), "w") as kw_ofd:
             iv_ofd.write("\n".join([x[2] for x in iv_keywords]))
-            oov_ofd.write("\n".join([x[2] for x in oov_keywords]))
+            oov_ofd.write("\n".join([x[2].encode("utf-8") for x in oov_keywords]))
             map_ofd.write("\n".join(["%s %.4d %.4d" % x for x in 
                                      sorted([("iv", gi, li) for li, (gi, tag, term) in enumerate(iv_keywords, 1)] + 
                                             [("oov", gi, li) for li, (gi, tag, term) in enumerate(oov_keywords, 1)], lambda x, y : cmp(x[1], y[1]))]))
