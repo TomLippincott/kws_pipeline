@@ -42,24 +42,19 @@ def query_files(target, source, env):
     with meta_open(source[0].rstr()) as kw_fd, meta_open(source[1].rstr()) as iv_fd:
         keyword_xml = et.parse(kw_fd)
         keywords = set([(x.get("kwid"), x.find("kwtext").text.lower()) for x in keyword_xml.getiterator("kw")])
-        vocab = set([x.split()[1].strip() for x in iv_fd])
+        vocab = set([x.split()[1].strip().decode("utf-8") for x in iv_fd])
         iv_keywords = sorted([(int(tag.split("-")[-1]), tag, term) for tag, term in keywords if all([y in vocab for y in term.split()])])
         oov_keywords = sorted([(int(tag.split("-")[-1]), tag, term) for tag, term in keywords if any([y not in vocab for y in term.split()])])
-        #print oov_keywords
-        #print len(keywords), len(iv_keywords), len(oov_keywords)
         with meta_open(target[0].rstr(), "w") as iv_ofd, meta_open(target[1].rstr(), "w") as oov_ofd, meta_open(target[2].rstr(), "w") as map_ofd, meta_open(target[3].rstr(), "w") as w2w_ofd, meta_open(target[4].rstr(), "w") as kw_ofd:
-            iv_ofd.write("\n".join([x[2] for x in iv_keywords]))
+            iv_ofd.write("\n".join([x[2].encode("utf-8") for x in iv_keywords]))
             oov_ofd.write("\n".join([x[2].encode("utf-8") for x in oov_keywords]))
             map_ofd.write("\n".join(["%s %.4d %.4d" % x for x in 
                                      sorted([("iv", gi, li) for li, (gi, tag, term) in enumerate(iv_keywords, 1)] + 
                                             [("oov", gi, li) for li, (gi, tag, term) in enumerate(oov_keywords, 1)], lambda x, y : cmp(x[1], y[1]))]))
-            w2w_ofd.write("\n".join(["0 0 %s %s 0" % (x, x) for x in vocab] + ["0"]))
+            w2w_ofd.write("\n".join([("0 0 %s %s 0" % (x, x)).encode("utf-8") for x in vocab if x != "VOCAB_NIL_WORD"] + ["0"]))
             for x in keyword_xml.getiterator("kw"):
-                #print dir(x)
                 x.set("kwid", "KW-%s" % x.get("kwid").split("-")[-1])
-                #x.set("kwid", n)
             keyword_xml.write(kw_ofd) #.write(et.tostring(keyword_xml.))
-            pass
     return None
 
 def ecf_file(target, source, env):
