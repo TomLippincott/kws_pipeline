@@ -213,7 +213,7 @@ Usage: /mnt/calculon-minor/lorelei_svn/KWS/bin64/wrd2phlattice [-opts] [output_d
     args["CONFUSION_NETWORK"] = ""
     args["FSM_DIR"] = "temp"
     args["WORDPRONSYMTABLE"] = wordpron.rstr()
-    cmd = env.subst("${BABEL_REPO}/KWS/bin64/wrd2phlattice")
+    cmd = env.subst("${WRD2PHLATTICE}")
     argstr = "-d %(DICTIONARY)s -D %(DATA_FILE)s -t %(FSMGZ_FORMAT)s -s %(WORDPRONSYMTABLE)s -S %(EPSILON_SYMBOLS)s %(CONFUSION_NETWORK)s -P %(PRUNE_THRESHOLD)d %(FSM_DIR)s" % args
     if not os.path.exists(os.path.dirname(target[0].rstr())):
         os.makedirs(os.path.dirname(target[0].rstr()))
@@ -244,7 +244,7 @@ Options:
 -v          (verbose) if specified all debug output is printed to stderr 
 -?      help
     """
-    command = env.subst("${BABEL_REPO}/KWS/bin64/buildindex -p ${SOURCE} ${TARGET}", target=target, source=source)
+    command = env.subst("${BUILDINDEX} -p ${SOURCE} ${TARGET}", target=target, source=source)
     stdout, stderr, success = run_command(command, env={"LD_LIBRARY_PATH" : env.subst(env["LIBRARY_OVERLAY"])}, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if not success:
         return stderr
@@ -255,7 +255,7 @@ def build_pad_fst(target, source, env):
 printing usage
 Usage: /mnt/calculon-minor/lorelei_svn/KWS/bin64/buildpadfst [symtable_file] [output_fst_file]
     """
-    command = env.subst("${BABEL_REPO}/KWS/bin64/buildpadfst ${SOURCE} ${TARGET}", target=target, source=source)
+    command = env.subst("${BUILDPADFST} ${SOURCE} ${TARGET}", target=target, source=source)
     stdout, stderr, success = run_command(command, env={"LD_LIBRARY_PATH" : env.subst(env["LIBRARY_OVERLAY"])}, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if not success:
         return stderr
@@ -265,7 +265,7 @@ def fst_compile(target, source, env):
     """
     Compile an FST using OpenFST's binary 'fstcompile'.
     """
-    command = env.subst("${OVERLAY}/bin/fstcompile --isymbols=${SOURCES[0]} --osymbols=${SOURCES[0]} ${SOURCES[1]}", target=target, source=source)
+    command = env.subst("${FSTCOMPILE} --isymbols=${SOURCES[0]} --osymbols=${SOURCES[0]} ${SOURCES[1]}", target=target, source=source)
     stdout, stderr, success = run_command(command, env={"LD_LIBRARY_PATH" : env.subst(env["LIBRARY_OVERLAY"])}, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if not success:
         return stderr
@@ -293,7 +293,7 @@ Usage: /mnt/calculon-minor/lorelei_svn/KWS/bin64/query2phonefst [-opts] [outputd
         os.makedirs(args["OUTDIR"])
     except:
         pass
-    command = env.subst("${BABEL_REPO}/KWS/bin64/query2phonefst -p ${SOURCES[0]} -s ${SOURCES[1]} -d ${SOURCES[2]} -l ${TARGETS[0]} -n %(n)d -I %(I)d %(OUTDIR)s ${SOURCES[3]}" % args, target=target, source=source)
+    command = env.subst("${QUERY2PHONEFST} -p ${SOURCES[0]} -s ${SOURCES[1]} -d ${SOURCES[2]} -l ${TARGETS[0]} -n %(n)d -I %(I)d %(OUTDIR)s ${SOURCES[3]}" % args, target=target, source=source)
     #command = env.subst("${BABEL_REPO}/KWS/bin64/query2phonefst -s ${SOURCES[1]} -d ${SOURCES[2]} -l ${TARGETS[0]} -I %(I)d %(OUTDIR)s ${SOURCES[3]}" % args, target=target, source=source)
     #print command
     stdout, stderr, success = run_command(command, env={"LD_LIBRARY_PATH" : env.subst(env["LIBRARY_OVERLAY"])}, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -329,7 +329,7 @@ Options:
     data_list, isym, idx, pad, queryph = source[0:5]
     args = source[-1].read()
     #command = env.subst("${BABEL_REPO}/KWS/bin64/stdsearch -F ${TARGET} -i ${SOURCES[2]} -s ${SOURCES[1]} -p ${SOURCES[3]} -d ${SOURCES[0]} -a %(TITLE)s -m %(PRECISION)s ${SOURCES[4]}" % args, target=target, source=source)
-    command = env.subst("${BABEL_REPO}/KWS/bin64/stdsearch -F ${TARGET} -i ${SOURCES[2]} -b KW- -s ${SOURCES[1]} -p ${SOURCES[3]} -d ${SOURCES[0]} -a %(TITLE)s -m %(PRECISION)s ${SOURCES[4]}" % args, target=target, source=source)
+    command = env.subst("${STDSEARCH} -F ${TARGET} -i ${SOURCES[2]} -b KW- -s ${SOURCES[1]} -p ${SOURCES[3]} -d ${SOURCES[0]} -a %(TITLE)s -m %(PRECISION)s ${SOURCES[4]}" % args, target=target, source=source)
     stdout, stderr, success = run_command(command, env={"LD_LIBRARY_PATH" : env.subst(env["LIBRARY_OVERLAY"])}, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if not success:
         return stderr
@@ -346,14 +346,14 @@ def merge(target, source, env):
     args = source[-1].read()
     #stdout, stderr, success = run_command(env.subst("${BABEL_REPO}/KWS/scripts/printQueryTermList.prl -padlength=%(PADLENGTH)d ${SOURCES[0]}" % args, 
     #                                                target=target, source=source), env={"LD_LIBRARY_PATH" : env.subst("${LIBRARY_OVERLAY}")})
-    stdout, stderr, success = run_command(env.subst("${BABEL_REPO}/KWS/scripts/printQueryTermList.prl -prefix=KW- -padlength=%(PADLENGTH)d ${SOURCES[0]}" % args, 
+    stdout, stderr, success = run_command(env.subst("${PRINTQUERYTERMLISTPRL} -prefix=KW- -padlength=%(PADLENGTH)d ${SOURCES[0]}" % args, 
                                                     target=target, source=source), env={"LD_LIBRARY_PATH" : env.subst("${LIBRARY_OVERLAY}")})
     meta_open(target[0].rstr(), "w").write(stdout)
     meta_open(target[1].rstr(), "w").write("\n".join([x.rstr() for x in source[1:-1]]))
     if args["MODE"] == "merge-atwv":
-        pass
+        return "merge-atwv option not supported!"
     else:        
-        merge_search_from_par_index = "${BABEL_REPO}/KWS/scripts/mergeSearchFromParIndex.prl -force-decision=\"YES\" ${TARGETS[0]} ${TARGETS[1]}"
+        merge_search_from_par_index = "${MERGESEARCHFROMPARINDEXPRL} -force-decision=\"YES\" ${TARGETS[0]} ${TARGETS[1]}"
         stdout, stderr, success = run_command(env.subst(merge_search_from_par_index, target=target, source=source), env={"LD_LIBRARY_PATH" : env.subst("${LIBRARY_OVERLAY}")})
         meta_open(target[2].rstr(), "w").write(stdout)
         meta_open(target[3].rstr(), "w").write("\n".join(stdout.split("\n")))
@@ -364,7 +364,7 @@ def merge_scores(target, source, env):
     NEEDS WORK!
     CONVERT TO BUILDER!
     """
-    stdout, stderr, success = run_command(env.subst("${BABEL_REPO}/KWS/scripts/merge.scores.sumpost.norm.pl 1 ${SOURCES[0]}", target=target, source=source), env={"LD_LIBRARY_PATH" : env.subst("${LIBRARY_OVERLAY}")})
+    stdout, stderr, success = run_command(env.subst("${MERGESCORESSUMPOSTNORMPL} ${SOURCES[0]}", target=target, source=source), env={"LD_LIBRARY_PATH" : env.subst("${LIBRARY_OVERLAY}")})
     if not success:
         return stderr
     meta_open(target[0].rstr(), "w").write(stdout)
@@ -405,7 +405,7 @@ def normalize(target, source, env):
     for b in bad:
         res_xml.getroot().remove(b)
     res_xml.write(tmpfile_name)
-    stdout, stderr, success = run_command(env.subst("${OVERLAY}/bin/python ${BABEL_REPO}/KWS/scripts/F4DENormalization.py ${SOURCE} ${TARGET}", target=target, source=tmpfile_name))
+    stdout, stderr, success = run_command(env.subst("${PYTHON} ${F4DENORMALIZATIONPY} ${SOURCE} ${TARGET}", target=target, source=tmpfile_name))
     os.remove(tmpfile_name)
     if not success:
         print stderr
@@ -431,7 +431,7 @@ def score(target, source, env):
     theargs = {}
     theargs.update(args)
     theargs.update({"KWS_LIST_FILE" : source[0].rstr(), "PREFIX" : tmpfile_name})
-    cmd = env.subst("${F4DE}/KWSEval/tools/KWSEval/KWSEval.pl -e %(ECF_FILE)s -r %(RTTM_FILE)s -s %(KWS_LIST_FILE)s -t ${SOURCES[1]} -o -b -f %(PREFIX)s" % theargs,
+    cmd = env.subst("${KWSEVALPL} -e %(ECF_FILE)s -r %(RTTM_FILE)s -s %(KWS_LIST_FILE)s -t ${SOURCES[1]} -o -b -f %(PREFIX)s" % theargs,
                     source=source, target=target)                    
     stdout, stderr, success = run_command(cmd, env={"LD_LIBRARY_PATH" : env.subst("${LIBRARY_OVERLAY}"), "PERL5LIB" : env.subst("${OVERLAY}/lib/perl5/site_perl:${F4DE}/common/lib:${F4DE}/KWSEval/lib/"), "PATH" : "/usr/bin"})
     if not success:

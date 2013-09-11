@@ -9,17 +9,39 @@ import kws_tools
 #
 vars = Variables("custom.py")
 vars.AddVariables(
-    ("OUTPUT_WIDTH", "", 130),
-    ("BABEL_REPO", "", None),
-    ("BABEL_RESOURCES", "", None),
-    ("F4DE", "", None),
-    ("INDUS_DB", "", None),
-    ("JAVA_NORM", "", "${BABEL_REPO}/KWS/examples/babel-dryrun/javabin"),
-    ("OVERLAY", "", None),
-    ("LIBRARY_OVERLAY", "", "${OVERLAY}/lib:${OVERLAY}/lib64"),
+    # this variable holds the definition of each experiment to run
     ("EXPERIMENTS", "", {}),
+
+    # these variables are for cosmetic/debugging purposes
+    ("OUTPUT_WIDTH", "", 130),
     ("LOG_LEVEL", "", logging.INFO),
     ("LOG_DESTINATION", "", sys.stdout),
+
+    # if these variables are set correctly, the rest should take care of themselves
+    ("BABEL_REPO", "", None),
+    ("BABEL_RESOURCES", "", None),
+    ("LORELEI_TOOLS", "", None),
+    ("OVERLAY", "", None),
+
+    # these variables all have default definitions in terms of the previous, but may be overridden as needed
+    ("PYTHON", "", "/usr/bin/python"),
+    ("BABEL_BIN_PATH", "", "${BABEL_REPO}/tools/kws/bin64"),
+    ("BABEL_SCRIPT_PATH", "", "${BABEL_REPO}/tools/kws/bin64"),
+    ("F4DE", "", "${BABEL_RESOURCES}/F4DE"),
+    ("INDUS_DB", "", "${BABEL_RESOURCES}/IndusDB"),
+    ("LIBRARY_OVERLAY", "", "${OVERLAY}/lib:${OVERLAY}/lib64:${LORELEI_TOOLS}/boost_1_49_0/64/lib"),
+    ("WRD2PHLATTICE", "", "${BABEL_BIN_PATH}/wrd2phlattice"),
+    ("BUILDINDEX", "", "${BABEL_BIN_PATH}/buildindex"),
+    ("BUILDPADFST", "", "${BABEL_BIN_PATH}/buildpadfst"),
+    ("FSTCOMPILE", "", "${OVERLAY}/bin/fstcompile"),
+    ("QUERY2PHONEFST", "", "${BABEL_BIN_PATH}/query2phonefst"),
+    ("STDSEARCH", "", "${BABEL_BIN_PATH}/stdsearch"),
+    ("MERGESEARCHFROMPARINDEXPRL", "", "${BABEL_SCRIPT_PATH}/mergeSearchFromParIndex.prl"),
+    ("MERGESCORESSUMPOSTNORMPL", "", "${BABEL_SCRIPT_PATH}/merge.scores.sumpost.norm.pl"),
+    ("PRINTQUERYTERMLISTPRL", "", "${BABEL_SCRIPT_PATH}/printQueryTermList.prl"),
+    ("F4DENORMALIZATIONPY", "", "${BABEL_SCRIPT_PATH}/F4DENormalization.py"),
+    ("JAVA_NORM", "", "${BABEL_REPO}/examples/babel-dryrun/javabin"),    
+    ("KWSEVALPL", "", "${F4DE}/KWSEval/tools/KWSEval/KWSEval.pl"),
     )
 
 #
