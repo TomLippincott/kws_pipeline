@@ -20,6 +20,7 @@ vars.AddVariables(
     # if these variables are set correctly, the rest should take care of themselves
     ("BABEL_REPO", "", None),
     ("BABEL_RESOURCES", "", None),
+    ("IBM_MODELS", "", None),
     ("LORELEI_TOOLS", "", None),
     ("OVERLAY", "", None),
 
@@ -29,7 +30,7 @@ vars.AddVariables(
     ("BABEL_SCRIPT_PATH", "", "${BABEL_REPO}/tools/kws/bin64"),
     ("F4DE", "", "${BABEL_RESOURCES}/F4DE"),
     ("INDUS_DB", "", "${BABEL_RESOURCES}/IndusDB"),
-    ("LIBRARY_OVERLAY", "", "${OVERLAY}/lib:${OVERLAY}/lib64:${LORELEI_TOOLS}/boost_1_49_0/64/lib"),
+    ("LIBRARY_OVERLAY", "", "${OVERLAY}/lib:${OVERLAY}/lib64:${LORELEI_TOOLS}/boost_1_49_0/stage/lib"),
     ("WRD2PHLATTICE", "", "${BABEL_BIN_PATH}/wrd2phlattice"),
     ("BUILDINDEX", "", "${BABEL_BIN_PATH}/buildindex"),
     ("BUILDPADFST", "", "${BABEL_BIN_PATH}/buildpadfst"),

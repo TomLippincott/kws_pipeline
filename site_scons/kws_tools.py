@@ -214,7 +214,8 @@ Usage: /mnt/calculon-minor/lorelei_svn/KWS/bin64/wrd2phlattice [-opts] [output_d
     args["FSM_DIR"] = "temp"
     args["WORDPRONSYMTABLE"] = wordpron.rstr()
     cmd = env.subst("${WRD2PHLATTICE}")
-    argstr = "-d %(DICTIONARY)s -D %(DATA_FILE)s -t %(FSMGZ_FORMAT)s -s %(WORDPRONSYMTABLE)s -S %(EPSILON_SYMBOLS)s %(CONFUSION_NETWORK)s -P %(PRUNE_THRESHOLD)d %(FSM_DIR)s" % args
+    #argstr = "-d %(DICTIONARY)s -D %(DATA_FILE)s -t %(FSMGZ_FORMAT)s -s %(WORDPRONSYMTABLE)s -S %(EPSILON_SYMBOLS)s %(CONFUSION_NETWORK)s -P %(PRUNE_THRESHOLD)d %(FSM_DIR)s" % args
+    argstr = "-d %(DICTIONARY)s -D %(DATA_FILE)s -t -s %(WORDPRONSYMTABLE)s -S %(EPSILON_SYMBOLS)s %(CONFUSION_NETWORK)s -P %(PRUNE_THRESHOLD)d %(FSM_DIR)s" % args
     if not os.path.exists(os.path.dirname(target[0].rstr())):
         os.makedirs(os.path.dirname(target[0].rstr()))
     stdout, stderr, success = run_command("%s %s" % (cmd, argstr), env={"LD_LIBRARY_PATH" : env.subst(env["LIBRARY_OVERLAY"])}, stdin=meta_open(lattice_list.rstr()), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
